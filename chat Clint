@@ -1,0 +1,43 @@
+import java.io.*;
+import java.net.Socket;
+import java.net.UnknownHostException;
+import java.util.function.Consumer;
+
+public class ChatClient {\
+
+// Class name corrected to ChatClient
+private Socket socket;
+        private PrintWriter out;
+        private BufferedReader in;
+        private Consumer<String> messageHandler;
+
+        public ChatClient(String address, int port, Consumer<String> messageHandler) throws IOException {
+            this.socket = new Socket(address, port);
+            this.out = new PrintWriter(socket.getOutputStream(), true);
+            this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            this.messageHandler = messageHandler;
+        }
+
+        public void startClient() {
+            new Thread(() -> {
+                String message;
+                try {
+                    while ((message = in.readLine()) != null) {
+                        messageHandler.accept(message);
+                    }
+                } catch (IOException e) {
+                    System.err.println("Error reading from server: " + e.getMessage());
+                } finally {
+                    try {
+                        socket.close();
+                    } catch (IOException e) {
+                        System.err.println("Error closing socket: " + e.getMessage());
+                    }
+                }
+            }).start();
+        }
+
+        public void sendMessage(String message) {
+            out.println(message);
+        }
+    }
